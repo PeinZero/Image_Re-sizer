@@ -53,7 +53,7 @@
             const os = require('os')
             const {ipcRenderer} = require('electron')
 
-            document.getElementById('output-path').innerText = path.join(os.homedir(),'Desktop','Image Re-Sizer')
+            document.getElementById('output-path').innerText = path.join(os.homedir(),'imageshrink')
 
             const form = document.getElementById('image-form')
             const slider = document.getElementById('slider')
@@ -71,7 +71,12 @@
                     quality,
                 })
             })
-
+            // on done
+            ipcRenderer.on('image:done' , () => {
+                M.toast({
+                    html: `Image resized to ${slider.value}% quality`, //display the alert
+                })
+            })
         </script>
 	</body>
 </html>

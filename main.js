@@ -1,10 +1,20 @@
+const path = require('path')
+const os = require('os')
 // BrowserWindow is a class used to create desktop windows
 // Menu for bringing in App menu from electron, by default its already but for a customized menu we do this.
 // globalShortcut i.e Ctrl+R to reload or Ctrl+Shift+I to open devtools
-const { app, BrowserWindow, Menu, globalShortcut, ipcMain } = require('electron')
+// ipcMain to recieve data send from index.html
+// shell to manipulate folders
+const { app, BrowserWindow, Menu, globalShortcut, ipcMain, shell } = require('electron')
+const imagemin = require('imagemin')
+const imageminMozjpeg = require('imagemin-mozjpeg')
+const imageminPngquant = require('imagemin-pngquant')
+const slash = require('slash')
+const log = require('electron-log')
+const { exception } = require('console')
 
 // set environment
-process.env.NODE_ENV = 'development'
+process.env.NODE_ENV = 'production'
 const isDev = process.env.NODE_ENV !== 'production' ? true : false
 const isMac = process.platform === 'darwin' ? true : false //for checking macOS or not since we want this to be cross-platfrom app.
 
@@ -103,6 +113,32 @@ const menu = [
 ]
 
 ipcMain.on('image:minimize', (e,options) =>{
-    console.log(options)
+    options.dest = path.join(os.homedir(),'imageshrink') //destination path
+    shrinkImage(options)
 } )
+
+async function shrinkImage({ imgPath, quality, dest }){
+    const pngQuality = quality/100
+    try {
+        const files = await imagemin( [slash(imgPath)], {
+            destination: dest,
+            plugins: [
+                imageminMozjpeg({quality}),
+                imageminPngquant({
+                    quality: [pngQuality, pngQuality ]
+                })
+            ]
+        })
+
+        // console.log(`sourcePath: ${files[0].sourcePath}`, `\ndestinationPath: ${files[0].destinationPath}`)
+        log.info(`[\n   {\n     sourcePath: ${files[0].sourcePath}`, `\n     destinationPath: ${files[0].destinationPath}\n    }\n]`)
+
+        shell.openPath(dest) // to open destination folder after resizing
+
+        mainWindow.webContents.send('image:done') // send alert to index.html
+    } catch (err) { // to catch an error
+        log.error(err)
+    }
+}
+
 app.allowRendererProcessReuse = true
