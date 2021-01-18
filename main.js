@@ -11,10 +11,10 @@ const imageminMozjpeg = require('imagemin-mozjpeg')
 const imageminPngquant = require('imagemin-pngquant')
 const slash = require('slash')
 const log = require('electron-log')
-const { exception } = require('console')
 
 // set environment
 process.env.NODE_ENV = 'production'
+
 const isDev = process.env.NODE_ENV !== 'production' ? true : false
 const isMac = process.platform === 'darwin' ? true : false //for checking macOS or not since we want this to be cross-platfrom app.
 
@@ -27,7 +27,7 @@ function createMainWindow () {
         width: isDev? 1000 : 500,
         height: 600,
         resizable: isDev ? true : false,
-        icon: './assets/icons/Icon_256x256.png',
+        icon: `${__dirname}/assets/icons/Icon_256x256.png`,
         webPreferences: {
             nodeIntegration: true,
         },
@@ -49,7 +49,7 @@ function createAboutWindow () {
         width: 350,
         height: 300,
         resizable: false,
-        icon: './assets/icons/Icon_256x256.png',
+        icon: `${__dirname}/assets/icons/Icon_256x256.png`,
     })
     aboutWindow.loadFile('./app/about.html')
 }
@@ -81,7 +81,7 @@ const menu = [
         // ]
         role: 'fileMenu'  //gives a standard file menu   
     },
-    { role: 'editMenu' }, //gives a standard edit menu 
+    // { role: 'editMenu' }, //gives a standard edit menu 
     ...(isDev ? [
         {
             label: 'Developer',
@@ -99,12 +99,7 @@ const menu = [
             submenu: [
                 {
                     label: 'About',
-                    click: () => {
-                        createAboutWindow()
-
-                        const aboutMenu = Menu.buildFromTemplate(aboutmenu = [])
-                        Menu.setApplicationMenu(aboutMenu)
-                    },
+                    click: createAboutWindow
                 }
             ]
         }
@@ -113,32 +108,47 @@ const menu = [
 ]
 
 ipcMain.on('image:minimize', (e,options) =>{
-    options.dest = path.join(os.homedir(),'imageshrink') //destination path
+    options.dest = path.join(os.homedir(),'imageresizer') //destination path
     shrinkImage(options)
 } )
 
 async function shrinkImage({ imgPath, quality, dest }){
-    const pngQuality = quality/100
+    
     try {
-        const files = await imagemin( [slash(imgPath)], {
+        const pngQuality = quality/100
+
+        const files = await imagemin([slash(imgPath)], {
             destination: dest,
             plugins: [
                 imageminMozjpeg({quality}),
                 imageminPngquant({
-                    quality: [pngQuality, pngQuality ]
-                })
-            ]
+                    quality: [pngQuality, pngQuality ],
+                }),
+            ],
         })
 
         // console.log(`sourcePath: ${files[0].sourcePath}`, `\ndestinationPath: ${files[0].destinationPath}`)
-        log.info(`[\n   {\n     sourcePath: ${files[0].sourcePath}`, `\n     destinationPath: ${files[0].destinationPath}\n    }\n]`)
+        // log.info(`[\n   {\n     sourcePath: ${files[0].sourcePath}`, `\n     destinationPath: ${files[0].destinationPath}\n    }\n]`)
+        // log.info(files)
 
         shell.openPath(dest) // to open destination folder after resizing
 
         mainWindow.webContents.send('image:done') // send alert to index.html
     } catch (err) { // to catch an error
-        log.error(err)
+        // log.error(err)
+        console.log(err)
     }
 }
 
-app.allowRendererProcessReuse = true
+app.on('window-all-closed', () => {
+    if (!isMac) {
+      app.quit()
+    }
+  })
+app.on('activate', () => {
+    if (BrowserWindow.getAllWindows().length === 0) {
+      createMainWindow()
+    }
+  })
+  
+  app.allowRendererProcessReuse = true

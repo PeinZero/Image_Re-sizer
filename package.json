@@ -1,11 +1,15 @@
 {
   "name": "image-re-sizer",
+  "productName": "Image Re-Sizer",
   "version": "1.0.0",
   "description": "The entire code is commented to help understand the code in the future.",
   "main": "main.js",
   "scripts": {
     "start": "electron .",
-    "dev": "nodemon --exec electron ."
+    "dev": "nodemon --exec electron .",
+    "package-mac": "electron-packager . --overwrite --platform=darwin --arch=x64 --icon=assets/icons/mac/icon.icns --prune=true --out=release-builds",
+    "package-win": "electron-packager . --overwrite --platform=win32 --arch=ia32 --icon=assets/icons/win/icon.ico --prune=false --out=release-builds --version-string.CompanyName=CE --version-string.FileDescription=CE --version-string.ProductName=\"Image Re-Sizer\"",
+    "package-linux": "electron-packager . --overwrite --platform=linux --arch=x64 --icon=assets/icons/png/1024x1024.png --prune=false --out=release-builds"
   },
   "repository": {
     "type": "git",
@@ -19,6 +23,7 @@
   "homepage": "https://github.com/PeinZero/Image_Re-sizer#readme",
   "devDependencies": {
     "electron": "^11.2.0",
+    "electron-packager": "^15.2.0",
     "nodemon": "^2.0.7"
   },
   "dependencies": {
