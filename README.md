@@ -12,3 +12,4 @@ Packeges Installed:
 - imagemin-mozjpeg (for jpeg format)
 - imagemin-pngquant (for png format)
 - slash (change backSlashes to forwardSlashes)
+- electron-log
